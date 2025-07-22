@@ -1,0 +1,7 @@
+[project]
+name = "stepik-conspect-helper"
+version = "0.1.0"
+description = "Utility to build text based course summaries faster"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
