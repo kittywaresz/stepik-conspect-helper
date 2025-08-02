@@ -1,5 +1,5 @@
-from .server import exchange
+from .server import TokenExchangeServer
 
 __all__ = [
-    "exchange",
+    "TokenExchangeServer",
 ]

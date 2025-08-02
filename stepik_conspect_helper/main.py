@@ -1,11 +1,9 @@
 import asyncio
 import logging
-import sys
 import webbrowser
 
 import aiohttp
 
-from stepik_conspect_helper import token_exchanger
 from stepik_conspect_helper.constants import (
     OAUTH_AUTH_CODE_RESPONSE_TYPE,
     OAUTH_BEARER_TOKEN_TYPE,
@@ -13,25 +11,27 @@ from stepik_conspect_helper.constants import (
     STEPIK_AUTHORIZATION_ENDPOINT,
     STEPIK_OATH_REDIRECT_URI,
     STEPIK_OAUTH_APP_CLIENT_ID,
-    TOKEN_EXCNHAGE_SERVER_HOST,
-    TOKEN_EXCNHAGE_SERVER_PORT,
+    TOKEN_EXCHANGE_SERVER_HOST,
+    TOKEN_EXCHANGE_SERVER_PORT,
 )
+from stepik_conspect_helper.token_exchanger import TokenExchangeServer
 
 
 async def fake_main() -> None:
-    access_token = await token_exchanger.exchange(
-        TOKEN_EXCNHAGE_SERVER_HOST,
-        TOKEN_EXCNHAGE_SERVER_PORT,
+    server = TokenExchangeServer(
+        TOKEN_EXCHANGE_SERVER_HOST,
+        TOKEN_EXCHANGE_SERVER_PORT,
     )
+    asyncio.create_task(server.listen())
 
-    if not access_token:
-        sys.exit(1)
+    while not server.access_token:
+        await asyncio.sleep(0.5)
 
     async with aiohttp.ClientSession() as session:
         async with session.get(
             "https://stepik.org/api/stepics/1",
             headers={
-                "Authorization": f"{OAUTH_BEARER_TOKEN_TYPE} {access_token}",
+                "Authorization": f"{OAUTH_BEARER_TOKEN_TYPE} {server.access_token}",
             },
         ) as response:
             response.raise_for_status()
