@@ -2,11 +2,8 @@ import asyncio
 import logging
 import webbrowser
 
-import aiohttp
-
 from stepik_conspect_helper.constants import (
     OAUTH_AUTH_CODE_RESPONSE_TYPE,
-    OAUTH_BEARER_TOKEN_TYPE,
     OAUTH_READ_SCOPE,
     STEPIK_AUTHORIZATION_ENDPOINT,
     STEPIK_OATH_REDIRECT_URI,
@@ -14,6 +11,7 @@ from stepik_conspect_helper.constants import (
     TOKEN_EXCHANGE_SERVER_HOST,
     TOKEN_EXCHANGE_SERVER_PORT,
 )
+from stepik_conspect_helper.stepa_api.client import StepaApiClient
 from stepik_conspect_helper.token_exchanger import TokenExchangeServer
 
 
@@ -27,17 +25,14 @@ async def fake_main() -> None:
     while not server.access_token:
         await asyncio.sleep(0.5)
 
-    async with aiohttp.ClientSession() as session:
-        async with session.get(
-            "https://stepik.org/api/stepics/1",
-            headers={
-                "Authorization": f"{OAUTH_BEARER_TOKEN_TYPE} {server.access_token}",
-            },
-        ) as response:
-            response.raise_for_status()
-            data = await response.json()
-            current_user_id = data["stepics"][0]["user"]
-            print(f"Здарова #{current_user_id}!")
+    async with StepaApiClient(server.access_token) as client:
+        course = await client.get_course(1)
+        print(f"{course.slug}:")
+
+        sections = await client.get_sections(course.sections)
+
+        for section in sections:
+            print(f"\t{section.slug}")
 
 
 if __name__ == "__main__":
